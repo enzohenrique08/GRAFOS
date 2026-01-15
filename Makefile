@@ -1,11 +1,11 @@
-CXX = g++
+CXX = g++ 
 CXXFLAGS = -O2 -std=c++17
 
-SRC = src/main.cpp src/Graph.cpp src/DefectiveColoring.cpp
+SRC = src/main.cpp src/Graph.cpp src/DefectiveColoring.cpp src/CSVUtils.cpp
 OUT = defective
 
 all:
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(OUT)
 
-clean:
+clean: 
 	rm -f defective
