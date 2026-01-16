@@ -6,8 +6,11 @@
 #include <chrono>
 #include <random>
 #include <vector>
-#include "CSVUtils.h"
+#include <algorithm>
 
+/* =====================================================
+   LEITURA DIMACS
+   ===================================================== */
 Graph readDIMACS(const std::string& filename) {
     std::ifstream file(filename);
     if (!file) {
@@ -39,14 +42,20 @@ Graph readDIMACS(const std::string& filename) {
     return g;
 }
 
+/* =====================================================
+   MAIN
+   ===================================================== */
 int main(int argc, char* argv[]) {
+
     if (argc < 4) {
         std::cout << "Uso:\n";
         std::cout << "./defective <instancia.col> <d> <algoritmo> [parametros] [seed]\n\n";
-        std::cout << "Algoritmos disponiveis:\n";
-        std::cout << "  guloso\n";
-        std::cout << "  randomizado <alpha>\n";
-        std::cout << "  reativo\n";
+        std::cout << "Algoritmos:\n";
+        std::cout << "  guloso [seed]\n";
+        std::cout << "  randomizado <alpha> <iteracoes> [seed]\n";
+        std::cout << "  reativo <alphas> <iteracoes> <bloco> [seed]\n";
+        std::cout << "Exemplo reativo:\n";
+        std::cout << "  ./defective grafo.col 2 reativo 0.1,0.3,0.5 100 10 123\n";
         return 0;
     }
 
@@ -54,47 +63,77 @@ int main(int argc, char* argv[]) {
     int d = std::stoi(argv[2]);
     std::string algoritmo = argv[3];
 
-    // Seed única
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    if (algoritmo == "randomizado" && argc >= 6) {
-        seed = std::stoul(argv[5]);
-    }
-    else if (algoritmo == "reativo" && argc >= 5) {
-        seed = std::stoul(argv[4]);
+    /* =====================================================
+       SEED ÚNICA
+       ===================================================== */
+    unsigned seed;
+    if (argc >= 5) {
+        seed = std::stoul(argv[argc - 1]);
+    } else {
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
     }
 
     std::mt19937 rng(seed);
     std::cout << "Seed usada: " << seed << "\n";
 
     Graph g = readDIMACS(instance);
-
     std::vector<int> color;
 
     auto start = std::chrono::high_resolution_clock::now();
 
+    /* =====================================================
+       GULOSO
+       ===================================================== */
     if (algoritmo == "guloso") {
         color = DefectiveColoring::greedy(g, d);
     }
+
+    /* =====================================================
+       GULOSO RANDOMIZADO
+       ===================================================== */
     else if (algoritmo == "randomizado") {
-        if (argc < 5) {
-            std::cerr << "Erro: informe o valor de alpha\n";
+
+        if (argc < 6) {
+            std::cerr << "Uso: randomizado <alpha> <iteracoes> [seed]\n";
             return 1;
         }
-        double alpha = std::stod(argv[4]);
-        color = DefectiveColoring::greedyRandomized(g, d, alpha, rng);
-    }
-    else if (algoritmo == "reativo") {
-        // Parâmetros padrão do reativo
-        std::vector<double> alphas = {0.1, 0.3, 0.5};
-        int iterations = 100;
-        int blockSize = 10;
 
-        color = DefectiveColoring::greedyRandomizedReactive(
-            g, d, alphas, iterations, blockSize, rng
+        double alpha = std::stod(argv[4]);
+        int iteracoes = std::stoi(argv[5]);
+
+        color = DefectiveColoring::greedyRandomized(
+            g, d, alpha, iteracoes, rng
         );
     }
+
+    /* =====================================================
+       GULOSO RANDOMIZADO REATIVO
+       ===================================================== */
+    else if (algoritmo == "reativo") {
+
+        if (argc < 7) {
+            std::cerr << "Uso: reativo <alphas> <iteracoes> <bloco> [seed]\n";
+            return 1;
+        }
+
+        /* Parse da lista de alphas */
+        std::vector<double> alphas;
+        std::stringstream ss(argv[4]);
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+            alphas.push_back(std::stod(token));
+        }
+
+        int iteracoes = std::stoi(argv[5]);
+        int bloco = std::stoi(argv[6]);
+
+        color = DefectiveColoring::greedyRandomizedReactive(
+            g, d, alphas, iteracoes, bloco, rng
+        );
+    }
+
     else {
-        std::cerr << "Algoritmo invalido. Use: guloso | randomizado | reativo\n";
+        std::cerr << "Algoritmo invalido\n";
         return 1;
     }
 
@@ -108,8 +147,6 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Cores usadas: " << numColors << "\n";
     std::cout << "Tempo (s): " << elapsed.count() << "\n";
-
-    
 
     return 0;
 }

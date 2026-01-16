@@ -3,6 +3,9 @@
 #include <numeric>
 #include <climits>
 
+/* =====================================================
+   GULOSO PURO
+   ===================================================== */
 std::vector<int> DefectiveColoring::greedy(const Graph& g, int d) {
     int n = g.n;
     std::vector<int> color(n, -1);
@@ -36,56 +39,76 @@ std::vector<int> DefectiveColoring::greedy(const Graph& g, int d) {
     return color;
 }
 
-// Guloso Randomizado
+/* =====================================================
+   GULOSO RANDOMIZADO COM ITERAÇÕES (OBRIGATÓRIO NO TRABALHO)
+   ===================================================== */
 std::vector<int> DefectiveColoring::greedyRandomized(
     const Graph& g,
     int d,
     double alpha,
+    int iterations,
     std::mt19937& rng
 ) {
-    int n = g.n;
-    std::vector<int> color(n, -1);
+    std::vector<int> bestSolution;
+    int bestColors = INT_MAX;
 
-    std::vector<int> candidates(n);
-    std::iota(candidates.begin(), candidates.end(), 0);
+    for (int it = 0; it < iterations; it++) {
 
-    int maxColor = 0;
+        int n = g.n;
+        std::vector<int> color(n, -1);
 
-    while (!candidates.empty()) {
-        // Ordena por grau (critério guloso)
-        std::sort(candidates.begin(), candidates.end(),
-                  [&](int a, int b) {
-                      return g.adj[a].size() > g.adj[b].size();
-                  });
+        std::vector<int> candidates(n);
+        std::iota(candidates.begin(), candidates.end(), 0);
 
-        int lrcSize = std::max(1, (int)(alpha * candidates.size()));
-        std::uniform_int_distribution<int> dist(0, lrcSize - 1);
+        int maxColor = 0;
 
-        int idx = dist(rng);
-        int v = candidates[idx];
+        while (!candidates.empty()) {
 
-        bool assigned = false;
-        for (int c = 0; c < maxColor; c++) {
-            if (canUseColor(g, color, v, c, d)) {
-                color[v] = c;
-                assigned = true;
-                break;
+            std::sort(candidates.begin(), candidates.end(),
+                      [&](int a, int b) {
+                          return g.adj[a].size() > g.adj[b].size();
+                      });
+
+            int lrcSize = std::max(1, (int)(alpha * candidates.size()));
+            std::uniform_int_distribution<int> dist(0, lrcSize - 1);
+
+            int v = candidates[dist(rng)];
+
+            bool assigned = false;
+            for (int c = 0; c < maxColor; c++) {
+                if (canUseColor(g, color, v, c, d)) {
+                    color[v] = c;
+                    assigned = true;
+                    break;
+                }
             }
+
+            if (!assigned) {
+                color[v] = maxColor++;
+            }
+
+            candidates.erase(
+                std::remove(candidates.begin(), candidates.end(), v),
+                candidates.end()
+            );
         }
 
-        if (!assigned) {
-            color[v] = maxColor++;
-        }
+        int usedColors = 0;
+        for (int c : color)
+            usedColors = std::max(usedColors, c + 1);
 
-        candidates.erase(
-            std::remove(candidates.begin(), candidates.end(), v),
-            candidates.end()
-        );
+        if (usedColors < bestColors) {
+            bestColors = usedColors;
+            bestSolution = color;
+        }
     }
 
-    return color;
+    return bestSolution;
 }
 
+/* =====================================================
+   GULOSO RANDOMIZADO REATIVO
+   ===================================================== */
 std::vector<int> DefectiveColoring::greedyRandomizedReactive(
     const Graph& g,
     int d,
@@ -109,7 +132,7 @@ std::vector<int> DefectiveColoring::greedyRandomizedReactive(
         int idx = dist(rng);
         double alpha = alphas[idx];
 
-        auto sol = greedyRandomized(g, d, alpha, rng);
+        auto sol = greedyRandomized(g, d, alpha, 1, rng);
 
         int colors = 0;
         for (int c : sol)
@@ -123,7 +146,6 @@ std::vector<int> DefectiveColoring::greedyRandomizedReactive(
         quality[idx] += 1.0 / colors;
         count[idx]++;
 
-        // Atualiza probabilidades ao final do bloco
         if (it % blockSize == 0) {
             double sum = 0.0;
             for (int i = 0; i < k; i++) {
@@ -132,8 +154,8 @@ std::vector<int> DefectiveColoring::greedyRandomizedReactive(
                 sum += prob[i];
             }
 
-            for (int i = 0; i < k; i++)
-                prob[i] /= sum;
+            for (double& p : prob)
+                p /= sum;
 
             std::fill(quality.begin(), quality.end(), 0.0);
             std::fill(count.begin(), count.end(), 0);
@@ -144,6 +166,9 @@ std::vector<int> DefectiveColoring::greedyRandomizedReactive(
     return bestSolution;
 }
 
+/* =====================================================
+   VERIFICAÇÃO DE COR (DEFECTIVE)
+   ===================================================== */
 bool DefectiveColoring::canUseColor(
     const Graph& g,
     const std::vector<int>& color,
