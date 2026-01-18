@@ -37,12 +37,13 @@ public:
     // rng        -> gerador com seed controlada
     // =====================================================
     static std::vector<int> greedyRandomizedReactive(
-        const Graph& g,
-        int d,
-        const std::vector<double>& alphas,
-        int iterations,
-        int blockSize,
-        std::mt19937& rng
+        const Graph& g, 
+        int d, 
+        const std::vector<double>& alphas, 
+        int iterations, 
+        int blockSize, 
+        std::mt19937& rng,
+        double& bestAlphaFound
     );
 
 private:

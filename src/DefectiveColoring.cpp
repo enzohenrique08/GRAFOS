@@ -110,59 +110,52 @@ std::vector<int> DefectiveColoring::greedyRandomized(
    GULOSO RANDOMIZADO REATIVO
    ===================================================== */
 std::vector<int> DefectiveColoring::greedyRandomizedReactive(
-    const Graph& g,
-    int d,
-    const std::vector<double>& alphas,
-    int iterations,
-    int blockSize,
-    std::mt19937& rng
-) {
+    const Graph& g, int d, const std::vector<double>& alphas, 
+    int iterations, int blockSize, std::mt19937& rng, double& bestAlphaFound) 
+{
     int k = alphas.size();
-
     std::vector<double> prob(k, 1.0 / k);
-    std::vector<double> quality(k, 0.0);
+    std::vector<double> sumSolutions(k, 0.0);
     std::vector<int> count(k, 0);
 
     std::vector<int> bestSolution;
     int bestColors = INT_MAX;
-
-    std::discrete_distribution<int> dist(prob.begin(), prob.end());
+    bestAlphaFound = -1.0; // Inicializa o rastreio
 
     for (int it = 1; it <= iterations; it++) {
+        std::discrete_distribution<int> dist(prob.begin(), prob.end());
         int idx = dist(rng);
         double alpha = alphas[idx];
 
         auto sol = greedyRandomized(g, d, alpha, 1, rng);
-
         int colors = 0;
-        for (int c : sol)
-            colors = std::max(colors, c + 1);
+        for (int c : sol) colors = std::max(colors, c + 1);
 
+        // Se encontrou uma solução melhor, guarda a solução e o alpha usado
         if (colors < bestColors) {
             bestColors = colors;
             bestSolution = sol;
+            bestAlphaFound = alpha; // Registra o melhor alpha 
         }
 
-        quality[idx] += 1.0 / colors;
+        sumSolutions[idx] += colors;
         count[idx]++;
 
-        if (it % blockSize == 0) {
-            double sum = 0.0;
+        if (it % blockSize == 0) { // Atualização das probabilidades ao fim do bloco [cite: 48]
+            std::vector<double> q(k);
+            double sumQ = 0.0;
             for (int i = 0; i < k; i++) {
-                if (count[i] > 0)
-                    prob[i] = quality[i] / count[i];
-                sum += prob[i];
+                if (count[i] > 0) {
+                    double avg = sumSolutions[i] / count[i];
+                    q[i] = std::pow((double)bestColors / avg, 10);
+                } else q[i] = 0.0;
+                sumQ += q[i];
             }
-
-            for (double& p : prob)
-                p /= sum;
-
-            std::fill(quality.begin(), quality.end(), 0.0);
+            for (int i = 0; i < k; i++) prob[i] = q[i] / sumQ;
+            std::fill(sumSolutions.begin(), sumSolutions.end(), 0.0);
             std::fill(count.begin(), count.end(), 0);
-            dist = std::discrete_distribution<int>(prob.begin(), prob.end());
         }
     }
-
     return bestSolution;
 }
 

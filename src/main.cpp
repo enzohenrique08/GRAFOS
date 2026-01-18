@@ -7,6 +7,7 @@
 #include <random>
 #include <vector>
 #include <algorithm>
+#include "CSVUtils.h"
 
 /* =====================================================
    LEITURA DIMACS
@@ -78,6 +79,7 @@ int main(int argc, char* argv[]) {
 
     Graph g = readDIMACS(instance);
     std::vector<int> color;
+    double bestAlphaFound = -1.0; // Variável para rastrear o melhor alpha no reativo
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -92,7 +94,6 @@ int main(int argc, char* argv[]) {
        GULOSO RANDOMIZADO
        ===================================================== */
     else if (algoritmo == "randomizado") {
-
         if (argc < 6) {
             std::cerr << "Uso: randomizado <alpha> <iteracoes> [seed]\n";
             return 1;
@@ -101,16 +102,14 @@ int main(int argc, char* argv[]) {
         double alpha = std::stod(argv[4]);
         int iteracoes = std::stoi(argv[5]);
 
-        color = DefectiveColoring::greedyRandomized(
-            g, d, alpha, iteracoes, rng
-        );
+        color = DefectiveColoring::greedyRandomized(g, d, alpha, iteracoes, rng);
+        bestAlphaFound = alpha; // No randomizado simples, o "melhor" é o único usado
     }
 
     /* =====================================================
        GULOSO RANDOMIZADO REATIVO
        ===================================================== */
     else if (algoritmo == "reativo") {
-
         if (argc < 7) {
             std::cerr << "Uso: reativo <alphas> <iteracoes> <bloco> [seed]\n";
             return 1;
@@ -127,8 +126,9 @@ int main(int argc, char* argv[]) {
         int iteracoes = std::stoi(argv[5]);
         int bloco = std::stoi(argv[6]);
 
+        // A função atualizada agora recebe bestAlphaFound por referência
         color = DefectiveColoring::greedyRandomizedReactive(
-            g, d, alphas, iteracoes, bloco, rng
+            g, d, alphas, iteracoes, bloco, rng, bestAlphaFound
         );
     }
 
@@ -147,6 +147,37 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Cores usadas: " << numColors << "\n";
     std::cout << "Tempo (s): " << elapsed.count() << "\n";
+
+    /* =====================================================
+       GRAVAÇÃO DOS RESULTADOS EM CSV
+       ===================================================== */
+    int iter_csv = (algoritmo != "guloso") ? std::stoi(argv[5]) : -1;
+    int bloco_csv = (algoritmo == "reativo") ? std::stoi(argv[6]) : -1;
+
+    // Se for reativo, passamos o bestAlphaFound capturado na função
+    // Se for randomizado, o alpha passado via parâmetro
+    // Se for guloso, passará -1.0
+    double alpha_csv = (algoritmo == "guloso") ? -1.0 : bestAlphaFound;
+
+    appendCSV(
+        instance,      // Instância 
+        algoritmo,     // Algoritmo executado 
+        d,             // Parâmetro d (restrição de grau) 
+        alpha_csv,     // Parâmetro alpha (melhor alpha no caso do reativo)
+        iter_csv,      // Número de iterações 
+        bloco_csv,     // Tamanho do bloco (reativo) 
+        seed,          // Semente de randomização 
+        elapsed.count(), // Tempo gasto (segundos) 
+        numColors      // Valor da melhor solução alcançada 
+    );
+
+    /* =====================================================
+       IMPRESSÃO DA SOLUÇÃO (Para visualização externa)
+       ===================================================== */
+    std::cout << "\n--- Solucao (Formato p/ Visualizador) ---\n";
+    for (int i = 0; i < g.n; i++) {
+        std::cout << i + 1 << " " << color[i] << "\n";
+    }
 
     return 0;
 }
