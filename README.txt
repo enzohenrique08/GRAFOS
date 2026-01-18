@@ -10,7 +10,7 @@ Parâmetro:
 
 Execução Guloso:
     ./defective <instancia> <d> guloso [seed]
-    Ex: ./defective instances/dsjc250.5.col.txt 2
+    Ex: ./defective instances/dsjc250.5.col.txt 2 guloso
 
 Execução Randomizado:
     ./defective <instancia> <d> randomizado <alpha> <iteracoes> [seed]
