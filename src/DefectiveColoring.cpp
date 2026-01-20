@@ -3,9 +3,7 @@
 #include <numeric>
 #include <climits>
 
-/* =====================================================
-   GULOSO PURO
-   ===================================================== */
+// GULOSO PURO
 std::vector<int> DefectiveColoring::greedy(const Graph& g, int d) {
     int n = g.n;
     std::vector<int> color(n, -1);
@@ -39,9 +37,7 @@ std::vector<int> DefectiveColoring::greedy(const Graph& g, int d) {
     return color;
 }
 
-/* =====================================================
-   GULOSO RANDOMIZADO COM ITERAÇÕES (OBRIGATÓRIO NO TRABALHO)
-   ===================================================== */
+// GULOSO RANDOMIZADO COM ITERAÇÕES
 std::vector<int> DefectiveColoring::greedyRandomized(
     const Graph& g,
     int d,
@@ -106,9 +102,7 @@ std::vector<int> DefectiveColoring::greedyRandomized(
     return bestSolution;
 }
 
-/* =====================================================
-   GULOSO RANDOMIZADO REATIVO
-   ===================================================== */
+// GULOSO RANDOMIZADO REATIVO
 std::vector<int> DefectiveColoring::greedyRandomizedReactive(
     const Graph& g, int d, const std::vector<double>& alphas, 
     int iterations, int blockSize, std::mt19937& rng, double& bestAlphaFound) 
@@ -135,13 +129,13 @@ std::vector<int> DefectiveColoring::greedyRandomizedReactive(
         if (colors < bestColors) {
             bestColors = colors;
             bestSolution = sol;
-            bestAlphaFound = alpha; // Registra o melhor alpha 
+            bestAlphaFound = alpha;
         }
 
         sumSolutions[idx] += colors;
         count[idx]++;
 
-        if (it % blockSize == 0) { // Atualização das probabilidades ao fim do bloco [cite: 48]
+        if (it % blockSize == 0) { // Atualização das probabilidades ao fim do bloco
             std::vector<double> q(k);
             double sumQ = 0.0;
             for (int i = 0; i < k; i++) {
@@ -159,9 +153,7 @@ std::vector<int> DefectiveColoring::greedyRandomizedReactive(
     return bestSolution;
 }
 
-/* =====================================================
-   VERIFICAÇÃO DE COR (DEFECTIVE)
-   ===================================================== */
+// VERIFICAÇÃO DE COR (DEFECTIVE)
 bool DefectiveColoring::canUseColor(
     const Graph& g,
     const std::vector<int>& color,

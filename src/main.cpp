@@ -137,9 +137,7 @@ int main(int argc, char* argv[]) {
     std::cout << "--- FIM ---\n";
     std::cout << "Melhor: " << bestGlobalColors << " | Media Cores: " << avgColors << " | Media Tempo: " << avgTime << "s\n";
 
-    /* =====================================================
-       Imprime a melhor das 10 soluções para visualizar (formato vértice-cor)
-       ===================================================== */
+    // Imprime a melhor das 10 soluções para visualizar (formato vértice-cor
     std::cout << "\n--- Solucao (Formato p/ Visualizador - Melhor Run) ---\n";
     for (int i = 0; i < g.n; i++) {
         // Formato: Vértice Cor

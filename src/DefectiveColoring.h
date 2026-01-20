@@ -7,20 +7,16 @@
 
 class DefectiveColoring {
 public:
-    // =====================================================
     // Guloso puro (determinístico)
-    // =====================================================
     static std::vector<int> greedy(
         const Graph& g,
         int d
     );
 
-    // =====================================================
     // Guloso randomizado
     // alpha      -> parâmetro de aleatoriedade
     // iterations -> número de execuções
     // rng        -> gerador com seed controlada
-    // =====================================================
     static std::vector<int> greedyRandomized(
         const Graph& g,
         int d,
@@ -29,13 +25,11 @@ public:
         std::mt19937& rng
     );
 
-    // =====================================================
     // Guloso randomizado reativo
     // alphas     -> conjunto de valores de alpha
     // iterations -> número total de iterações
     // blockSize  -> tamanho do bloco de atualização
     // rng        -> gerador com seed controlada
-    // =====================================================
     static std::vector<int> greedyRandomizedReactive(
         const Graph& g, 
         int d, 
